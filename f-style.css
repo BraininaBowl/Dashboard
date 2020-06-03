@@ -1,3 +1,11 @@
-h1 {
-  font-family: "Bebas";
+body {
+  font-family: "Questrial";
+  background-color: #000000;
+  color:#ffffff;
+}
+
+#main {
+  width: 758px;
+  height: 1024px;
+  display: block;
 }
