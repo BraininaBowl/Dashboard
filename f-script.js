@@ -1,6 +1,8 @@
 var updater;
 var time = new Date();
-var body = document.documentElement;
+var baseurl = "http://192.168.178.46:8080/json.htm?"
+var opbrengst
+var gebruik
 
 window.onload = function () {
   //openFullscreen();
@@ -28,6 +30,9 @@ function startTimer() {
 function update(){
   getTime()
   getPanel()
+  getMeterOpbrengst()
+  getMeterGebruik()
+  getGas()
 }
 
 function getTime(){
@@ -37,20 +42,72 @@ function getTime(){
 }
 
 function getPanel() {
-
-
-  /*
   var xhttp = new XMLHttpRequest();
-  var baseurl = "http://192.168.178.46:8080/json.htm?"
-  var options = ""
-  options += "type=command&param=udevice&idx=16&nvalue=0&svalue=POWER;ENERGY"
+  var options = "type=devices&rid=16"
 
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("solar").innerHTML = this.responseText.POWER;
+      var data = JSON.parse(this.response).result[0];
+      document.getElementById("solar_here").innerHTML = "<span class='huge'>" + data.Usage.toLowerCase().replace(" ", " </span> <span class='large'>") + "</span>";
+      document.getElementById("vandaag_here").innerHTML = "<span class='huge'>" + data.CounterToday.toLowerCase().replace(" ", " </span> <span class='large'>") + "</span>";
     }
   };
   xhttp.open("GET", baseurl + options, true);
   xhttp.send();
-  */
+}
+
+function getMeterOpbrengst() {
+  var xhttp = new XMLHttpRequest();
+  var options = "type=devices&rid=20"
+
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var data = JSON.parse(this.response).result[0].Data.split(" ");
+      document.getElementById("meter_opbrengst_here").innerHTML = "<span class='huge'>" + data[0] + " </span> <span class='large'>" + data[1].toLowerCase() + "</span>";
+      if (data[1] == "Watt") {
+        opbrengst = Number(data[0]);
+      } else {
+        opbrengst = Number(data[0]) * 1000;
+      }
+    }
+  };
+  xhttp.open("GET", baseurl + options, true);
+  xhttp.send();
+}
+
+function getMeterGebruik() {
+  var xhttp = new XMLHttpRequest();
+  var options = "type=devices&rid=19"
+
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var data = JSON.parse(this.response).result[0].Data.split(" ");
+      document.getElementById("meter_gebruik_here").innerHTML = "<span class='huge'>" + data[0] + " </span> <span class='large'>" + data[1].toLowerCase() + "</span>";
+      if (data[1] == "Watt") {
+        gebruik = Number(data[0]);
+      } else {
+        gebruik = Number(data[0]) * 1000;
+      }
+
+
+      var netto = gebruik - opbrengst;
+      document.getElementById("netto_here").innerHTML = "<span class='huge'>" + netto + " </span> <span class='large'>watt</span>";
+    }
+  };
+  xhttp.open("GET", baseurl + options, true);
+  xhttp.send();
+}
+
+function getGas() {
+  var xhttp = new XMLHttpRequest();
+  var options = "type=devices&rid=21"
+
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var data = JSON.parse(this.response).result[0].CounterToday.split(" ");
+      document.getElementById("gas_here").innerHTML = "<span class='huge'>" + data[0] + " </span> <span class='large'>m<sup>3</sup></span>";
+    }
+  };
+  xhttp.open("GET", baseurl + options, true);
+  xhttp.send();
 }

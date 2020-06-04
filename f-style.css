@@ -36,10 +36,10 @@ body {
 }
 
 .blockbody {
-  width: 100%;
+  width: 279px;
   padding: 0 0 20px 0;
   text-align: center;
-  height: 160px;
+  height: 140px;
   vertical-align: bottom;
   display: table-cell;
 }
