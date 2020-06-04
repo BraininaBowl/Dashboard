@@ -1,11 +1,72 @@
+/* kindle browser doesn't support calc(), so I'm using fixed pixel sizes. */
+
 body {
   font-family: "Questrial";
+  font-weight: bolder;
   background-color: #000000;
   color:#ffffff;
+  padding: 0px;
+  margin: 0px;
+}
+
+.bar, .box {
+  border-bottom: 4px solid #dddddd;
+  padding: 20px;
+  margin: 0 0 40px 40px;
+  float: left;
+}
+
+.bar {
+  width: 638px;
+}
+
+.box {
+  width: 279px;
+}
+
+.header {
+  width: 100%;
+  text-align: center;
+}
+
+.blockheader {
+  width: 100%;
+  padding: 0 0 20px 0;
+  text-align: center;
+}
+
+.blockbody {
+  width: 100%;
+  padding: 0 0 20px 0;
+  text-align: center;
+  height: 160px;
+  vertical-align: bottom;
+  display: table-cell;
 }
 
 #main {
   width: 758px;
   height: 1024px;
   display: block;
+  background-color: #000000;
+}
+
+.text {
+  font-size: 30px;
+  font-weight: normal;
+}
+
+.accent {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.large {
+  font-size: 48px;
+  font-weight: normal;
+}
+
+.huge {
+  font-size: 72px;
+  font-weight: bold;
 }
