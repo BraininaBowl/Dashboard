@@ -1,8 +1,13 @@
 var updater;
+var timer;
 var time = new Date();
 var baseurl = "http://192.168.178.46:8080/json.htm?"
 var opbrengst
-var gebruik
+var opbrengst_dag
+var opbrengst_meter = new Array;
+var gebruik = new Array;
+var netto
+var gas
 
 window.onload = function () {
   //openFullscreen();
@@ -19,16 +24,17 @@ function startTimer() {
     // update everything
     update();
     // start a new timer to run every 60 seconds
-    updater = setInterval(update,60000);
+    updater = setInterval(getTime,60000);
+    updater = setInterval(update,15000);
   }
   // draw stuff right now
+  getTime()
   update();
   //count down towards first update at the beginning of a minute.
   var startTime = setInterval(startUpdate,59999-time.getMilliseconds());
 }
 
 function update(){
-  getTime()
   getPanel()
   getMeterOpbrengst()
   getMeterGebruik()
@@ -47,9 +53,10 @@ function getPanel() {
 
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      var data = JSON.parse(this.response).result[0];
-      document.getElementById("solar_here").innerHTML = "<span class='huge'>" + data.Usage.toLowerCase().replace(" ", " </span> <span class='large'>") + "</span>";
-      document.getElementById("vandaag_here").innerHTML = "<span class='huge'>" + data.CounterToday.toLowerCase().replace(" ", " </span> <span class='large'>") + "</span>";
+      opbrengst = JSON.parse(this.response).result[0].Usage.split(" ");
+      opbrengst_dag = JSON.parse(this.response).result[0].CounterToday.split(" ");
+      document.getElementById("solar_here").innerHTML = "<span class='huge'>" + opbrengst[0] + " </span> <span class='large'>" + opbrengst[1].toLowerCase() + "</span>";
+      document.getElementById("vandaag_here").innerHTML = "<span class='huge'>" + opbrengst_dag[0] + " </span> <span class='large'>" + opbrengst_dag[1].toLowerCase() + "</span>";
     }
   };
   xhttp.open("GET", baseurl + options, true);
@@ -62,13 +69,7 @@ function getMeterOpbrengst() {
 
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      var data = JSON.parse(this.response).result[0].Data.split(" ");
-      document.getElementById("meter_opbrengst_here").innerHTML = "<span class='huge'>" + data[0] + " </span> <span class='large'>" + data[1].toLowerCase() + "</span>";
-      if (data[1] == "Watt") {
-        opbrengst = Number(data[0]);
-      } else {
-        opbrengst = Number(data[0]) * 1000;
-      }
+      opbrengst_meter = JSON.parse(this.response).result[0].Data.split(" ");
     }
   };
   xhttp.open("GET", baseurl + options, true);
@@ -81,17 +82,36 @@ function getMeterGebruik() {
 
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      var data = JSON.parse(this.response).result[0].Data.split(" ");
-      document.getElementById("meter_gebruik_here").innerHTML = "<span class='huge'>" + data[0] + " </span> <span class='large'>" + data[1].toLowerCase() + "</span>";
-      if (data[1] == "Watt") {
-        gebruik = Number(data[0]);
+      netto = JSON.parse(this.response).result[0].Data.split(" ");
+
+      // daadwerkelijk gebruik uitrekenen
+      var netto_watt = Number(netto[0])
+      var opbrengst_watt = Number(opbrengst[0])
+      var opbrengst_meter_watt = Number(opbrengst_meter[0])
+      if (netto[1] != "Watt"){netto_watt *= 1000}
+      if (opbrengst[1] != "Watt"){opbrengst_watt *= 1000}
+      if (opbrengst_meter[1] != "Watt"){opbrengst_meter_watt *= 1000}
+      var gebruik_watt = netto_watt + opbrengst_watt - opbrengst_meter_watt
+      if (Math.sign(gebruik_watt) * gebruik_watt <= 999) {
+        gebruik[0] = gebruik_watt;
+        gebruik[1] = "Watt";
       } else {
-        gebruik = Number(data[0]) * 1000;
+        gebruik[0] = gebruik_watt/1000;
+        gebruik[1] = "kW";
       }
 
+      //netto correctie bij teruglevering
+      netto_watt = gebruik_watt - opbrengst_watt
+      if (Math.sign(netto_watt) * netto_watt <= 999) {
+        netto[0] = netto_watt;
+        netto[1] = "Watt";
+      } else {
+        netto[0] = netto_watt/1000;
+        netto[1] = "kW";
+      }
 
-      var netto = gebruik - opbrengst;
-      document.getElementById("netto_here").innerHTML = "<span class='huge'>" + netto + " </span> <span class='large'>watt</span>";
+      document.getElementById("meter_gebruik_here").innerHTML = "<span class='huge'>" + gebruik[0] + " </span> <span class='large'>" + gebruik[1].toLowerCase() + "</span>";
+      document.getElementById("netto_here").innerHTML = "<span class='huge'>" + netto[0] + " </span> <span class='large'>" + netto[1].toLowerCase() + "</span>";
     }
   };
   xhttp.open("GET", baseurl + options, true);
