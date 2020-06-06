@@ -102,7 +102,7 @@ function getMeterGebruik() {
 
       //netto correctie bij teruglevering
       netto_watt = gebruik_watt - opbrengst_watt
-      if (Math.sign(netto_watt) * netto_watt <= 999) {
+      if (netto_watt <= 999 && netto_watt >= -999 ) {
         netto[0] = netto_watt;
         netto[1] = "Watt";
       } else {
