@@ -1,7 +1,9 @@
-var updater;
-var timer;
+var timeUpdater;
+var powerUpdater;
+var startPower;
 var time = new Date();
 var baseurl = "http://192.168.178.46:8080/json.htm?"
+var lastPanelUpdate = 0
 var opbrengst
 var opbrengst_dag
 var opbrengst_meter = new Array;
@@ -10,35 +12,51 @@ var netto
 var gas
 
 window.onload = function () {
-  //openFullscreen();
   startTimer()
-  //getPanel()
 }
 
 
 function startTimer() {
-  function startUpdate() {
+  function timeUpdate() {
     // we're at the first second of a minute
     //stop the countdown
     clearInterval(startTime);
-    // update everything
-    update();
+    // update time
+    getTime();
     // start a new timer to run every 60 seconds
-    updater = setInterval(getTime,60000);
-    updater = setInterval(update,15000);
+    timeUpdater = setInterval(getTime,60000);
+  }
+  function powerUpdate() {
+    // The panel should update any time now
+    // update everything
+    getPanel();
+    // start a new timer to run every 60 seconds
+    powerUpdater = setInterval(getPanel,60000);
   }
   // draw stuff right now
   getTime()
-  update();
-  //count down towards first update at the beginning of a minute.
-  var startTime = setInterval(startUpdate,59999-time.getMilliseconds());
-}
+  getPanel();
 
-function update(){
-  getPanel()
-  getMeterOpbrengst()
-  getMeterGebruik()
-  getGas()
+  //count down towards first update at the beginning of a minute.
+  var startTime = setInterval(timeUpdate,59999-time.getMilliseconds());
+
+  // get last upate from panels
+  var xhttp = new XMLHttpRequest();
+  var options = "type=devices&rid=16"
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      lastPanelUpdate = Number(JSON.parse(this.response).result[0].LastUpdate.split(" ").join('').split("-").join('').split(":").join(''));
+      var numberconstructor = lastPanelUpdate.toString().slice(-2)
+
+      var milsecsTillNextUpdate = 60000 - time.getMilliseconds() + (Number(lastPanelUpdate.toString().slice(-2))*1000);
+      while (milsecsTillNextUpdate >= 60000) {
+        milsecsTillNextUpdate -= 60000;
+      }
+      startPower = setInterval(powerUpdate,milsecsTillNextUpdate);
+    }
+  };
+  xhttp.open("GET", baseurl + options, true);
+  xhttp.send();
 }
 
 function getTime(){
@@ -53,10 +71,20 @@ function getPanel() {
 
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      opbrengst = JSON.parse(this.response).result[0].Usage.split(" ");
-      opbrengst_dag = JSON.parse(this.response).result[0].CounterToday.split(" ");
-      document.getElementById("solar_here").innerHTML = "<span class='huge'>" + opbrengst[0] + " </span> <span class='large'>" + opbrengst[1].toLowerCase() + "</span>";
-      document.getElementById("vandaag_here").innerHTML = "<span class='huge'>" + opbrengst_dag[0] + " </span> <span class='large'>" + opbrengst_dag[1].toLowerCase() + "</span>";
+      thisPanelUpdate = Number(JSON.parse(this.response).result[0].LastUpdate.split(" ").join('').split("-").join('').split(":").join(''));
+      console.log(thisPanelUpdate, lastPanelUpdate);
+      if (thisPanelUpdate > lastPanelUpdate) {
+        clearInterval(startPower);
+        lastPanelUpdate = thisPanelUpdate;
+        opbrengst = JSON.parse(this.response).result[0].Usage.split(" ");
+        opbrengst_dag = JSON.parse(this.response).result[0].CounterToday.split(" ");
+        document.getElementById("solar_here").innerHTML = "<span class='huge'>" + opbrengst[0] + " </span> <span class='large'>" + opbrengst[1].toLowerCase() + "</span>";
+        document.getElementById("vandaag_here").innerHTML = "<span class='huge'>" + opbrengst_dag[0] + " </span> <span class='large'>" + opbrengst_dag[1].toLowerCase() + "</span>";
+
+        getMeterOpbrengst()
+        getMeterGebruik()
+        getGas()
+      }
     }
   };
   xhttp.open("GET", baseurl + options, true);
