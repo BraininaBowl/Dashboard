@@ -72,7 +72,6 @@ function getPanel() {
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       thisPanelUpdate = Number(JSON.parse(this.response).result[0].LastUpdate.split(" ").join('').split("-").join('').split(":").join(''));
-      console.log(thisPanelUpdate, lastPanelUpdate);
       if (thisPanelUpdate > lastPanelUpdate) {
         clearInterval(startPower);
         lastPanelUpdate = thisPanelUpdate;
