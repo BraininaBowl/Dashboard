@@ -10,6 +10,7 @@ var opbrengst_meter = new Array;
 var gebruik = new Array;
 var netto
 var gas
+var mode = 0
 
 window.onload = function () {
   startTimer()
@@ -66,28 +67,32 @@ function getTime(){
 }
 
 function getPanel() {
-  var xhttp = new XMLHttpRequest();
-  var options = "type=devices&rid=16"
+  // are we displaying the energy or something else? This is basicly here for future expansion plans.
+  if (mode == 0) {
+    // the solar panels get updated at the lowest frequence, so we poll them first. If the panels have been updated, we'll request the meter for the other values.
+    var xhttp = new XMLHttpRequest();
+    var options = "type=devices&rid=16"
 
-  xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      thisPanelUpdate = Number(JSON.parse(this.response).result[0].LastUpdate.split(" ").join('').split("-").join('').split(":").join(''));
-      if (thisPanelUpdate > lastPanelUpdate) {
-        clearInterval(startPower);
-        lastPanelUpdate = thisPanelUpdate;
-        opbrengst = JSON.parse(this.response).result[0].Usage.split(" ");
-        opbrengst_dag = JSON.parse(this.response).result[0].CounterToday.split(" ");
-        document.getElementById("solar_here").innerHTML = "<span class='huge'>" + opbrengst[0] + " </span> <span class='large'>" + opbrengst[1].toLowerCase() + "</span>";
-        document.getElementById("vandaag_here").innerHTML = "<span class='huge'>" + opbrengst_dag[0] + " </span> <span class='large'>" + opbrengst_dag[1].toLowerCase() + "</span>";
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        thisPanelUpdate = Number(JSON.parse(this.response).result[0].LastUpdate.split(" ").join('').split("-").join('').split(":").join(''));
+        if (thisPanelUpdate > lastPanelUpdate) {
+          clearInterval(startPower);
+          lastPanelUpdate = thisPanelUpdate;
+          opbrengst = JSON.parse(this.response).result[0].Usage.split(" ");
+          opbrengst_dag = JSON.parse(this.response).result[0].CounterToday.split(" ");
+          document.getElementById("solar_here").innerHTML = "<span class='huge'>" + opbrengst[0] + " </span> <span class='large'>" + opbrengst[1].toLowerCase() + "</span>";
+          document.getElementById("vandaag_here").innerHTML = "<span class='huge'>" + opbrengst_dag[0] + " </span> <span class='large'>" + opbrengst_dag[1].toLowerCase() + "</span>";
 
-        getMeterOpbrengst()
-        getMeterGebruik()
-        getGas()
+          getMeterOpbrengst()
+          getMeterGebruik()
+          getGas()
+        }
       }
-    }
-  };
-  xhttp.open("GET", baseurl + options, true);
-  xhttp.send();
+    };
+    xhttp.open("GET", baseurl + options, true);
+    xhttp.send();
+  }
 }
 
 function getMeterOpbrengst() {
@@ -115,11 +120,11 @@ function getMeterGebruik() {
       var netto_watt = Number(netto[0])
       var opbrengst_watt = Number(opbrengst[0])
       var opbrengst_meter_watt = Number(opbrengst_meter[0])
-      if (netto[1] != "Watt"){netto_watt *= 1000}
-      if (opbrengst[1] != "Watt"){opbrengst_watt *= 1000}
-      if (opbrengst_meter[1] != "Watt"){opbrengst_meter_watt *= 1000}
+      if (netto[1] != "Watt"){netto_watt = 1000 * netto_watt}
+      if (opbrengst[1] != "Watt"){opbrengst_watt = 1000 * opbrengst_watt}
+      if (opbrengst_meter[1] != "Watt"){opbrengst_meter_watt = 1000 * opbrengst_meter_watt}
       var gebruik_watt = netto_watt + opbrengst_watt - opbrengst_meter_watt
-      if (Math.sign(gebruik_watt) * gebruik_watt <= 999) {
+      if (gebruik_watt <= 999 && gebruik_watt >= -999) {
         gebruik[0] = gebruik_watt;
         gebruik[1] = "Watt";
       } else {
