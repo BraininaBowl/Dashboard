@@ -3,34 +3,23 @@
 <head>
   <meta charset="utf-8">
   <title></title>
-  <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="./f-style.css">
   <script src="./f-script.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Arvo:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="./f-style.css">
 </head>
 <body>
   <div id="main">
-    <div class="bar" id="frame_time">
-      <div id="time" class="header accent"></div>
+    <div class="bar" id="frame_solar">
+      <img src="f-sun.png" width="80" height="80" ><span class="blockbody" id="solar_here">Nothing loaded yet</span>
     </div>
-    <div class="box" id="frame_solar">
-      <div class="blockheader text">Huidige opbrengst</div>
-      <div class="blockbody" id="solar_here"></div>
+    <div class="bar" id="frame_meter_gebruik">
+      <img src="f-usage.png" width="80" height="80" ><span class="blockbody" id="meter_gebruik_here">Nothing loaded yet</span>
     </div>
-    <div class="box" id="frame_vandaag">
-      <div class="blockheader text">Opbrengst vandaag</div>
-      <div class="blockbody" id="vandaag_here"></div>
+    <div class="bar" id="frame_netto">
+      <img src="f-meter.png" width="80" height="80" ><span class="blockbody" id="netto_here">Nothing loaded yet</span>
     </div>
-    <div class="box" id="frame_meter_gebruik">
-      <div class="blockheader text">Gebruik</div>
-      <div class="blockbody" id="meter_gebruik_here"></div>
-    </div>
-    <div class="box" id="frame_netto">
-      <div class="blockheader text">Netto gebruik</div>
-      <div class="blockbody" id="netto_here"></div>
-    </div>
-    <div class="box" id="frame_gas">
-      <div class="blockheader text">Gas vandaag</div>
-      <div class="blockbody" id="gas_here"></div>
+    <div class="bar" id="frame_gas">
+      <img src="f-gas.png" width="80" height="80" ><span class="blockbody" id="gas_here">Nothing loaded yet</span>
     </div>
   </div>
 </body>

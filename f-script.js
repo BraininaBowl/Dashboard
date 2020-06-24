@@ -1,54 +1,53 @@
-var timeUpdater;
 var powerUpdater;
 var startPower;
+var screenClear;
 var time = new Date();
-var baseurl = "http://192.168.178.46:8080/json.htm?"
-var lastPanelUpdate = 0
-var opbrengst
-var opbrengst_dag
-var opbrengst_meter = new Array;
+var baseurl = "http://192.168.178.46:8080/json.htm?";
+var lastPanelUpdate = 0;
+var lastPanelTimeRounded;
+var thisPanelTime;
+var opbrengst_meter_watt;
+var opbrengst;
+var opbrengst_watt;
 var gebruik = new Array;
-var netto
-var gas
-var mode = 0
+var gebruik_watt;
+var netto = new Array;
+var netto_watt;
+var gas;
 
 window.onload = function () {
-  startTimer()
+  document.getElementById("solar_here").innerHTML = "HOI!";
+  startTimer();
 }
 
-
 function startTimer() {
-  function timeUpdate() {
-    // we're at the first second of a minute
-    //stop the countdown
-    clearInterval(startTime);
-    // update time
-    getTime();
-    // start a new timer to run every 60 seconds
-    timeUpdater = setInterval(getTime,60000);
-  }
   function powerUpdate() {
     // The panel should update any time now
-    // update everything
     getPanel();
     // start a new timer to run every 60 seconds
     powerUpdater = setInterval(getPanel,60000);
   }
   // draw stuff right now
-  getTime()
   getPanel();
-
-  //count down towards first update at the beginning of a minute.
-  var startTime = setInterval(timeUpdate,59999-time.getMilliseconds());
 
   // get last upate from panels
   var xhttp = new XMLHttpRequest();
-  var options = "type=devices&rid=16"
+  var options = "type=devices&rid=16";
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
+      // get update time
       lastPanelUpdate = Number(JSON.parse(this.response).result[0].LastUpdate.split(" ").join('').split("-").join('').split(":").join(''));
-      var numberconstructor = lastPanelUpdate.toString().slice(-2)
+      // get rounded update time to sync with meter data
+      lastPanelTimeRounded = JSON.parse(this.response).result[0].LastUpdate.slice(0, -3);
+      var lastNumber = Number(lastPanelTimeRounded.charAt(lastPanelTimeRounded.length-1));
+      if (lastNumber >= 5) {
+        lastNumber = 5;
+      } else {
+        lastNumber = 0;
+      }
+      lastPanelTimeRounded = lastPanelTimeRounded.slice(0, -1) + lastNumber;
 
+      // Set updater
       var milsecsTillNextUpdate = 60000 - time.getMilliseconds() + (Number(lastPanelUpdate.toString().slice(-2))*1000);
       while (milsecsTillNextUpdate >= 60000) {
         milsecsTillNextUpdate -= 60000;
@@ -60,48 +59,50 @@ function startTimer() {
   xhttp.send();
 }
 
-function getTime(){
-  time = new Date()
-  //kindle browser doesn't support "time.toLocaleTimeString([], {hour12: false, hour: '2-digit', minute:'2-digit'});" so I'm using another approach
-  document.getElementById('time').innerHTML = time.getHours() + ":" + (time.getMinutes()<10?'0':'') + time.getMinutes() + " - " + time.toLocaleDateString();
-}
-
 function getPanel() {
-  // are we displaying the energy or something else? This is basicly here for future expansion plans.
-  if (mode == 0) {
-    // the solar panels get updated at the lowest frequence, so we poll them first. If the panels have been updated, we'll request the meter for the other values.
-    var xhttp = new XMLHttpRequest();
-    var options = "type=devices&rid=16"
-
+  // the solar panels get updated at the lowest frequence, so we poll them first. If the panels have been updated, we'll request the meter for the other values.
+  var xhttp = new XMLHttpRequest();
+  var options = "type=devices&rid=16";
     xhttp.onreadystatechange = function() {
-      if (this.readyState == 4 && this.status == 200) {
-        thisPanelUpdate = Number(JSON.parse(this.response).result[0].LastUpdate.split(" ").join('').split("-").join('').split(":").join(''));
-        if (thisPanelUpdate > lastPanelUpdate) {
+    if (this.readyState == 4 && this.status == 200) {
+      thisPanelTime = JSON.parse(this.response).result[0].LastUpdate;
+      var thisPanelUpdate = Number(thisPanelTime.split(" ").join('').split("-").join('').split(":").join(''));
+      if (thisPanelUpdate > lastPanelUpdate) {
           clearInterval(startPower);
-          lastPanelUpdate = thisPanelUpdate;
-          opbrengst = JSON.parse(this.response).result[0].Usage.split(" ");
-          opbrengst_dag = JSON.parse(this.response).result[0].CounterToday.split(" ");
-          document.getElementById("solar_here").innerHTML = "<span class='huge'>" + opbrengst[0] + " </span> <span class='large'>" + opbrengst[1].toLowerCase() + "</span>";
-          document.getElementById("vandaag_here").innerHTML = "<span class='huge'>" + opbrengst_dag[0] + " </span> <span class='large'>" + opbrengst_dag[1].toLowerCase() + "</span>";
-
-          getMeterOpbrengst()
-          getMeterGebruik()
-          getGas()
+        lastPanelUpdate = thisPanelUpdate;
+        opbrengst = JSON.parse(this.response).result[0].Usage.split(" ");
+        opbrengst_watt = Number(opbrengst[0])
+        //Watt or kW?
+        if (opbrengst_watt <= 999 && opbrengst_watt >= -999) {
+          opbrengst[0] = opbrengst_watt;
+          opbrengst[1] = "Watt";
+        } else {
+          opbrengst[0] = opbrengst_watt/1000;
+          opbrengst[1] = "kW";
         }
+        document.getElementById("solar_here").innerHTML = "<span class='huge'>" + opbrengst[0] + " </span> <span class='large'>" + opbrengst[1].toLowerCase() + "</span>";
+        getMeterOpbrengst()
+        getMeterGebruik()
+        getGas()
       }
-    };
-    xhttp.open("GET", baseurl + options, true);
-    xhttp.send();
-  }
+    }
+  };
+  xhttp.open("GET", baseurl + options, true);
+  xhttp.send();
 }
 
 function getMeterOpbrengst() {
   var xhttp = new XMLHttpRequest();
-  var options = "type=devices&rid=20"
+  var options = "type=graph&sensor=counter&idx=20&range=day&method=1";
 
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      opbrengst_meter = JSON.parse(this.response).result[0].Data.split(" ");
+      var items = JSON.parse(this.response).result
+      for (var i = 0; i < items.length; i++){
+        if (items[i].d == lastPanelTimeRounded) {
+          opbrengst_meter_watt = items[i].u;
+        }
+      };
     }
   };
   xhttp.open("GET", baseurl + options, true);
@@ -110,20 +111,19 @@ function getMeterOpbrengst() {
 
 function getMeterGebruik() {
   var xhttp = new XMLHttpRequest();
-  var options = "type=devices&rid=19"
+  var options = "type=graph&sensor=counter&idx=19&range=day&method=1";
 
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      netto = JSON.parse(this.response).result[0].Data.split(" ");
+      var items = JSON.parse(this.response).result
+      for (var i = 0; i < items.length; i++){
+        if (items[i].d == lastPanelTimeRounded) {
+          netto_watt = items[i].u;
+        }
+      };
 
       // daadwerkelijk gebruik uitrekenen
-      var netto_watt = Number(netto[0])
-      var opbrengst_watt = Number(opbrengst[0])
-      var opbrengst_meter_watt = Number(opbrengst_meter[0])
-      if (netto[1] != "Watt"){netto_watt = 1000 * netto_watt}
-      if (opbrengst[1] != "Watt"){opbrengst_watt = 1000 * opbrengst_watt}
-      if (opbrengst_meter[1] != "Watt"){opbrengst_meter_watt = 1000 * opbrengst_meter_watt}
-      var gebruik_watt = netto_watt + opbrengst_watt - opbrengst_meter_watt
+      gebruik_watt = netto_watt + opbrengst_watt - opbrengst_meter_watt;
       if (gebruik_watt <= 999 && gebruik_watt >= -999) {
         gebruik[0] = gebruik_watt;
         gebruik[1] = "Watt";
@@ -133,7 +133,7 @@ function getMeterGebruik() {
       }
 
       //netto correctie bij teruglevering
-      netto_watt = gebruik_watt - opbrengst_watt
+      netto_watt = gebruik_watt - opbrengst_watt;
       if (netto_watt <= 999 && netto_watt >= -999 ) {
         netto[0] = netto_watt;
         netto[1] = "Watt";
@@ -152,8 +152,7 @@ function getMeterGebruik() {
 
 function getGas() {
   var xhttp = new XMLHttpRequest();
-  var options = "type=devices&rid=21"
-
+  var options = "type=devices&rid=21";
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       var data = JSON.parse(this.response).result[0].CounterToday.split(" ");
