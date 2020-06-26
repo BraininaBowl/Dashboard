@@ -13,7 +13,7 @@ var gebruik_watt;
 var netto = new Array;
 var netto_watt;
 var gas;
-var powerUpdater
+var powerUpdater;
 
 window.onload = function () {
   startTimer();
@@ -21,13 +21,16 @@ window.onload = function () {
 
 function startTimer() {
   // draw stuff right now
-  getPanel();
+  getPanel()
 
   // get time to next update
-  var lastNumberMinutes = Number(time.getMinutes().charAt(lastPanelTimeRounded.length-1));
+  var lastNumberMinutes = time.getMinutes() % 10
+  //var lastNumberMinutes = Number(minutes.charAt(minutes.length-1));
   if (lastNumberMinutes >= 5) {
     lastNumberMinutes -= 5;
   }
+
+  clearInterval(powerUpdater);
   powerUpdater = setInterval(getPanel, 299000 - (time.getMilliseconds() + (time.getSeconds()*1000) + (lastNumberMinutes*1000*60)));
 }
 
@@ -61,11 +64,11 @@ function getPanel() {
 
             // update again in five minutes
             clearInterval(powerUpdater);
-            powerUpdater = setInterval(powerUpdate,299000);
+            powerUpdater = setInterval(getPanel,299000);
           } else {
             //data hasn't updated yet, trying again in a second
             clearInterval(powerUpdater);
-            powerUpdater = setInterval(powerUpdate,1000);
+            powerUpdater = setInterval(getPanel,1000);
           }
         } else {
           i += 1;
