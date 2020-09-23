@@ -1,8 +1,8 @@
 /* kindle browser doesn't support calc(), so I'm using fixed pixel sizes. */
 
 body {
-  font-family: "Arvo";
-  background-color: #ffffff;
+  font-family: "Teko";
+  background-color: #999999;
   color:#000000;
   padding: 0px;
   margin: 0px;
@@ -11,18 +11,18 @@ body {
 
 .bar {
   width: 638px;
-  height: 140px;
-  padding: 30px 20px;
-  margin: 0 0 40px 40px;
+  padding: 30px 40px;
+  margin: 120px 0 60px 40px;
   float: left;
   text-align: right;
-  border-bottom: 8px solid #999999;
+  /*border-bottom: 8px solid #999999;*/
   vertical-align: bottom;
   white-space: nowrap;
+  line-height: 90px;
 }
 
 .blockbody {
-  padding: 0 20px;
+  padding: 0 20px 40px;
   white-space: nowrap;
 }
 
@@ -33,6 +33,12 @@ body {
   position: absolute;
   top: 0;
   left: 0;
+}
+
+.unicode {
+  font-family: 'Noto Sans TC', sans-serif;
+  vertical-align: top;
+  font-size: 40%;
 }
 
 .text {
@@ -46,11 +52,11 @@ body {
 }
 
 .large {
-  font-size: 100px;
-  font-weight: 400;
+  font-size: 120px;
+  font-weight: 500;
 }
 
 .huge {
-  font-size: 132px;
+  font-size: 240px;
   font-weight: 700;
 }
