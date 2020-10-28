@@ -1,17 +1,16 @@
 //var time = new Date();
 var baseurl = "http://192.168.178.46:8080/json.htm?";
+var options = "type=devices";
 var data = new Array;
 data.meter = new Array;
 
 
 window.onload = function () {
   drawAll();
-  powerUpdater = setInterval(drawAll, 100);
 }
 
 function drawAll() {
   var xhttp = new XMLHttpRequest();
-  var options = "type=devices";
 
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
@@ -37,8 +36,10 @@ function drawAll() {
       }
       document.getElementById("solar_here").innerHTML = "<span class='huge'><span class='unicode'>☀</span> " + Math.round(data.solar[0]) + " </span><br><span class='large'>" + data.solar[1].toLowerCase() + "</span>";
       document.getElementById("meter_gebruik_here").innerHTML = "<span class='huge'><span class='unicode'>" + data.meter[3] + "</span> " + Math.round(data.meter[0]) + " </span><br><span class='large'>" + data.meter[1].toLowerCase() + "</span>";
+      setTimeout(drawAll, 200);
     }
   };
   xhttp.open("GET", baseurl + options, true);
+  xhttp.ontimeout = function () { setTimeout(drawAll, 1000); }
   xhttp.send();
 }
